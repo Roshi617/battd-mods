@@ -1,4 +1,4 @@
-BonusEndOfRoundCashBATTD/BonusEndOfRoundCashBATTD/bin/
-BonusEndOfRoundCashBATTD/BonusEndOfRoundCashBATTD/obj/
-BonusEndOfRoundCashBATTD/.vs/
+*bin/
+*obj/
+*.vs/
 freeplayBATTD/
