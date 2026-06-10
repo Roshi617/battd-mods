@@ -1,1 +1,1 @@
-Untested code. It's updated code from the old repo for newer melonloader versions (to ensure compatibility with newer versions of melonloader) but its currently untested.
+Adds 1000 cash at the end of every round. Requires Melonloader (0.7.1). Put the dll in your Mods folder.
