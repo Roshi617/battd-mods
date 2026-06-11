@@ -1,0 +1,1 @@
+A mod that automatically puts you into freeplay upon starting a game. This is forced for as long as the mod is enabled. Perfect for messing around. To install put the dll into your Mods folder after installing MelonLoader.
