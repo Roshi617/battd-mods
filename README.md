@@ -1,1 +1,1 @@
-New repo for MelonLoader mods for Bloons Adventure Time TD. Put the .dlls in your Mods folder after installing MelonLoader on your game.
+New repo for MelonLoader mods for Bloons Adventure Time TD. Put the .dlls in your Mods folder after installing MelonLoader 0.7.1 on your game.
