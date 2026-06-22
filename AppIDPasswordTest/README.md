@@ -1,1 +1,1 @@
-Experimental mod used to generated the Profile.save password. DO NOT USE THIS
+Experimental mod used to generate the Profile.save password (for monke save pack/unpacker) DO NOT USE THIS
