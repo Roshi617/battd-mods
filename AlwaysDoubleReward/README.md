@@ -1,0 +1,1 @@
+Enables the double reward button after every game, instead of once every 24 hours.
