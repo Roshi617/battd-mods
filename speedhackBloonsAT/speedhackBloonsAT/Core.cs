@@ -1,57 +1,125 @@
-﻿using MelonLoader;
+using HarmonyLib;
+using Il2CppAssets.Scripts.Unity.UI_New.InGame;
+using MelonLoader;
 using UnityEngine;
-using Il2CppAssets.Scripts;
 
-[assembly: MelonInfo(typeof(speedhackBloonsAT.Core), "speedhackBloonsAT", "1.0.0", "xenia617", null)]
+[assembly: MelonInfo(typeof(speedhackBloonsAT.Core), "speedhackBloonsAT", "1.1.0", "xenia617", null)]
 [assembly: MelonGame("Ninja Kiwi", "Bloons Adventure Time TD")]
 
 namespace speedhackBloonsAT
 {
     public class Core : MelonMod
     {
-        public static float speed = 0.02f;
-        public static float fasterSpeed = 0.033333336f;
-        public static float evenFasterSpeed = 0.08333334f;
-        public static float normalAmount = 0.016666668f;
+        private static readonly float[] Multipliers = { 1f, 2f, 5f, 10f };
+        private static readonly KeyCode[] Keys = { KeyCode.F1, KeyCode.F2, KeyCode.F3, KeyCode.F4 };
+
+        private const float VanillaMaxDeltaTime = 1f / 3f;
+        private const float BoostedMaxDeltaTime = 0.5f;
+
+
+        private static float multiplier = 1f;
+        private static float gameScale = 1f;
+        private static float appliedScale = 1f;
+        private static bool gameOverLock;   
+
+        private static void ResetToVanilla(string reason)
+        {
+            multiplier = 1f;
+            Time.maximumDeltaTime = VanillaMaxDeltaTime;
+            // Undo the multiplication right now, before the game-over screen loads. (prevents lag)
+            if (gameScale >= 0f && !Mathf.Approximately(Time.timeScale, gameScale))
+            {
+                Time.timeScale = gameScale;
+            }
+            appliedScale = Time.timeScale;
+            MelonLogger.Msg($"Speed reset to vanilla ({reason})");
+        }
+
+        private static void ReleaseLock(string reason)
+        {
+            if (!gameOverLock) return;
+            gameOverLock = false;
+            MelonLogger.Msg($"Speed keys re-enabled ({reason})");
+        }
+
+        [HarmonyPatch(typeof(InGame), nameof(InGame.GameComplete))]
+        public static class GameCompletePatch
+        {
+            public static void Prefix()
+            {
+                gameOverLock = true;
+                ResetToVanilla("game ended");
+            }
+        }
+
+        [HarmonyPatch(typeof(InGame), nameof(InGame.StartMatch))]
+        public static class StartMatchPatch
+        {
+            public static void Postfix() { ReleaseLock("match started"); }
+        }
+
+        [HarmonyPatch(typeof(InGame), nameof(InGame.OnVictoryFreeplayButton))]
+        public static class FreeplayPatch
+        {
+            public static void Postfix() { ReleaseLock("freeplay"); }
+        }
+
+        [HarmonyPatch(typeof(InGame), nameof(InGame.ContinueForCoins))]
+        public static class ContinuePatch
+        {
+            public static void Postfix() { ReleaseLock("continued"); }
+        }
+
         public override void OnInitializeMelon()
         {
-            LoggerInstance.Msg("Initialized SpeedhackBATTD.");
+            LoggerInstance.Msg("speedhack keys: F1 = 1x, F2 = 2x, F3 = 5x, F4 = 10x (stacks with in-game FF). F8 = debug.");
+        }
+
+        public override void OnSceneWasLoaded(int buildIndex, string sceneName)
+        {
+            appliedScale = Time.timeScale;
+            gameScale = Time.timeScale;
         }
 
         public override void OnUpdate()
         {
-            base.OnUpdate();
+            for (int i = 0; i < Keys.Length; i++)
+            {
+                if (Input.GetKeyDown(Keys[i]))
+                {
+                    if (gameOverLock)
+                    {
+                        MelonLogger.Msg("Speed keys disabled on the game-over screen.");
+                        break;
+                    }
+                    multiplier = Multipliers[i];
+                    Time.maximumDeltaTime = multiplier > 1f ? BoostedMaxDeltaTime : VanillaMaxDeltaTime;
+                    MelonLogger.Msg($"Speed multiplier set to {multiplier}x");
+                }
+            }
 
-            //debug key (for testing and checking values)
+            float current = Time.timeScale;
+
+            if (!Mathf.Approximately(current, appliedScale))
+            {
+                gameScale = current;
+            }
+
+            // only speed up actual gameplay
+            bool inGame = InGame.instance != null && !gameOverLock;
+            float target = (inGame && gameScale > 0f) ? gameScale * multiplier : gameScale;
+
+            if (!Mathf.Approximately(current, target))
+            {
+                Time.timeScale = target;
+            }
+            appliedScale = target;
+
             if (Input.GetKeyDown(KeyCode.F8))
             {
-                MelonLogger.Msg("FFTimeScale: " + Constants.fastFowardTimeScale);
-                MelonLogger.Msg("RegTimeScale: " + Constants.regularTimeScale);
-                MelonLogger.Msg("fixedUpdateTime: " + Constants.fixedUpdateTime);
-            }
-
-            // 2x speed key
-            if (Input.GetKeyDown(KeyCode.F2))
-            {
-                speed = fasterSpeed;
-                Constants.fastFowardTimeScale = speed;
-                MelonLogger.Msg("Speed set to 2x faster");
-            }
-
-            // 5x speed key
-            if (Input.GetKeyDown(KeyCode.F3))
-            {
-                speed = evenFasterSpeed;
-                Constants.fastFowardTimeScale = speed;
-                MelonLogger.Msg("Speed set to 5x faster");
-            }
-
-            // Normal FF speed key
-            if (Input.GetKeyDown(KeyCode.F1))
-            {
-                speed = normalAmount;
-                Constants.fastFowardTimeScale = speed;
-                MelonLogger.Msg("Speed set to normal speed.");
+                MelonLogger.Msg($"timeScale={Time.timeScale} gameScale={gameScale} multiplier={multiplier} locked={gameOverLock} " +
+                                $"fixedDeltaTime={Time.fixedDeltaTime} maxDeltaTime={Time.maximumDeltaTime} " +
+                                $"fps={1f / Time.unscaledDeltaTime:F0}");
             }
         }
     }
