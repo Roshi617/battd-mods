@@ -1,1 +1,6 @@
-A mod that automatically puts you into freeplay upon starting a game. It uses the martian games round set (no way to define it otherwise). This is forced for as long as the mod is enabled. Perfect for messing around. To install put the dll into your Mods folder after installing MelonLoader 0.7.1.
+Adds the freeplay button on the Victory screen. RoundSet and other values relating to freeplay can be configured in UserData\MelonPreferences.cfg (this file is generated after closing the game).
+
+
+Mostly untested. Use at your own risk.
+
+To install put the dll into your Mods folder after installing MelonLoader 0.7.1.
